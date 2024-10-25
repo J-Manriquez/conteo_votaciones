@@ -77,7 +77,7 @@ class _RecuentoVotosScreenState extends State<RecuentoVotosScreen> {
                   },
                   style: ElevatedButton.styleFrom(
                       minimumSize: Size(double.infinity, 50)),
-                  child: const Text('Añadir Tabla'),
+                  child: const Text('Añadir Tabla',style: TextStyle(color: Color.fromRGBO(5, 5, 5, 1,),),),
                 ),
               ),
               ..._tableConfigs.asMap().entries.map((entry) {
