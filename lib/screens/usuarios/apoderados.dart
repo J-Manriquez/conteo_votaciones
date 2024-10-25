@@ -14,7 +14,7 @@ class _VocalesScreenState extends State<VocalesScreen> {
   Future<void> _deleteUser(String userId) async {
     await _firestoreService.deleteDocument('usuarios', userId);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Usuario eliminado')),
+      SnackBar(content: Text('Apoderado eliminado')),
     );
   }
 
@@ -22,7 +22,7 @@ class _VocalesScreenState extends State<VocalesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Vocales'),
+        title: Text('Apoderados'),
       ),
       body: Column(
         children: [
@@ -37,7 +37,7 @@ class _VocalesScreenState extends State<VocalesScreen> {
                   MaterialPageRoute(builder: (context) => AddUserScreen()),
                 );
               },
-              child: Text('Añadir Usuario'),
+              child: Text('Añadir Apoderado', style: TextStyle(color: Color.fromRGBO(5, 5, 5, 1,))),
             ),
           ),
           // Lista de usuarios en tarjetas

@@ -6,8 +6,10 @@ import 'package:conteo_votaciones/database/metodos/candidatos_mtd.dart';
 
 class VoteCountingScreen extends StatefulWidget {
   final String mesaId;
+  final bool showAppBar; // Controla la visibilidad del AppBar
 
-  const VoteCountingScreen({Key? key, required this.mesaId}) : super(key: key);
+  const VoteCountingScreen({Key? key, required this.mesaId,
+  this.showAppBar = true}) : super(key: key);
 
   @override
   _VoteCountingScreenState createState() => _VoteCountingScreenState();
@@ -209,13 +211,17 @@ class _VoteCountingScreenState extends State<VoteCountingScreen> {
     'objetados': Colors.red.shade300,
     'nulos': const Color.fromARGB(120, 0, 0, 0),
   };
+  
+  get showAppBar => true;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Conteo de Votos'),
-      ),
+      appBar: widget.showAppBar
+          ? AppBar(
+              title: const Text('Conteo de Votos'), // Título del AppBar
+            )
+          : null, 
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Padding(
@@ -255,7 +261,9 @@ class _VoteCountingScreenState extends State<VoteCountingScreen> {
                                                     fontWeight:
                                                         FontWeight.bold)),
                                             Text(
-                                                'Cargo: ${_cargosCandidatos[candidate] ?? "Cargando..."}', style: TextStyle(fontSize: 17),),
+                                              'Cargo: ${_cargosCandidatos[candidate] ?? "Cargando..."}',
+                                              style: TextStyle(fontSize: 17),
+                                            ),
                                           ],
                                         ),
                                         Icon(isOpen

@@ -37,7 +37,7 @@ class _MesasScreenState extends State<MesasScreen> {
                   MaterialPageRoute(builder: (context) => AddMesaScreen()),
                 );
               },
-              child: Text('Añadir Mesa'),
+              child: Text('Añadir Mesa', style: TextStyle(color: Color.fromRGBO(5, 5, 5, 1,))),
             ),
           ),
           // Lista de mesas en tarjetas

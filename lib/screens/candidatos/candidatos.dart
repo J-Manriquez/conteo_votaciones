@@ -43,7 +43,7 @@ class _CandidatosScreenState extends State<CandidatosScreen> {
                   MaterialPageRoute(builder: (context) => AddCandidateScreen()),
                 );
               },
-              child: Text('Añadir Candidato'),
+              child: Text('Añadir Candidato', style: TextStyle(color: Color.fromRGBO(5, 5, 5, 1,))),
             ),
           ),
           // Lista de candidatos en tarjetas

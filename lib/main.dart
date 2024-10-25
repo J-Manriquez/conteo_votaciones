@@ -1,13 +1,15 @@
 import 'package:conteo_votaciones/screens/candidatos/candidatos.dart';
 import 'package:conteo_votaciones/screens/conteo/recuentoVotos.dart';
 import 'package:conteo_votaciones/screens/conteo/verConteoMesas.dart';
+import 'package:conteo_votaciones/screens/log/log_inicial.dart';
 import 'package:conteo_votaciones/screens/mesas/mesas.dart';
 import 'package:conteo_votaciones/screens/usuarios/apoderados.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Asegura la inicialización de widgets
+  WidgetsFlutterBinding
+      .ensureInitialized(); // Asegura la inicialización de widgets
   await Firebase.initializeApp(); // Inicializa Firebase
   runApp(const MainApp()); // Inicia la aplicación
 }
@@ -19,7 +21,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Conteo Votaciones', // Título de la aplicación
-      home: HomeScreen(), // Establece la pantalla principal
+      home: LoginScreen(), // Establece la pantalla principal
       debugShowCheckedModeBanner: false, // Elimina el banner de depuración
     );
   }
@@ -58,6 +60,8 @@ class _HomeScreenState extends State<HomeScreen> {
             _currentIndex = index; // Cambia la pantalla según el índice
           });
         },
+        selectedItemColor: Colors.black,
+        unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.receipt),
@@ -80,10 +84,11 @@ class _HomeScreenState extends State<HomeScreen> {
           // Encabezado del Drawer
           Container(
             padding: const EdgeInsets.all(16.0),
-            color: Theme.of(context).primaryColor,
+            color: Colors.black,
             child: Row(
               children: [
-                Icon(Icons.menu, color: Colors.white, size: 40), // Icono de menú
+                Icon(Icons.menu,
+                    color: Colors.white, size: 40), // Icono de menú
                 const SizedBox(width: 16), // Espacio entre icono y texto
                 const Text(
                   'Menú Principal',
@@ -97,41 +102,103 @@ class _HomeScreenState extends State<HomeScreen> {
             child: ListView(
               children: [
                 // Botón para navegar a la pantalla Vocales
-                ElevatedButton(
-                  onPressed: () {
+                GestureDetector(
+                  onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => VocalesScreen()),
                     );
                   },
-                  child: const Text('Ver Vocales'), // Texto del botón
-                  style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)), // Estilo del botón
+                  child: Container(
+                    padding:
+                        EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Icon(Icons.people_alt_sharp,
+                            color: Colors.black), // Ícono al lado del texto
+                        SizedBox(
+                            width: 8.0), // Espacio entre el ícono y el texto
+                        Text(
+                          'Ver Apoderados',
+                          style: TextStyle(color: Colors.black, fontSize: 16.0),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 16.0), // Espacio entre botones
-                
-                // Botón para navegar a la pantalla Candidatos
-                ElevatedButton(
-                  onPressed: () {
+                Divider(
+                  color: Colors.black87,
+                  indent: 20,
+                  thickness: 1.0,
+                  height: 1.0,
+                ),
+                GestureDetector(
+                  onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => CandidatosScreen()),
+                      MaterialPageRoute(
+                          builder: (context) => CandidatosScreen()),
                     );
                   },
-                  child: const Text('Ver Candidatos'), // Texto del botón
-                  style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)), // Estilo del botón
+                  child: Container(
+                    padding:
+                        EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Icon(Icons.people_outline_outlined,
+                            color: Colors.black), // Ícono al lado del texto
+                        SizedBox(
+                            width: 8.0), // Espacio entre el ícono y el texto
+                        Text(
+                          'Ver Candidatos',
+                          style: TextStyle(color: Colors.black, fontSize: 16.0),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 16.0), // Espacio entre botones
-                
-                // Botón para navegar a la pantalla Mesas
-                ElevatedButton(
-                  onPressed: () {
+                Divider(
+                  color: Colors.black87,
+                  indent: 20,
+                  thickness: 1.0,
+                  height: 1.0,
+                ),
+                GestureDetector(
+                  onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => MesasScreen()),
                     );
                   },
-                  child: const Text('Ver Mesas'), // Texto del botón
-                  style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50)), // Estilo del botón
+                  child: Container(
+                    padding:
+                        EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
+                    // decoration: BoxDecoration(
+                    // color: Colors.blue,
+                    // borderRadius: BorderRadius.circular(8.0),
+                    // ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Icon(Icons.add_box_sharp,
+                            color: Colors.black), // Ícono al lado del texto
+                        SizedBox(
+                            width: 8.0), // Espacio entre el ícono y el texto
+                        Text(
+                          'Ver Mesas',
+                          style: TextStyle(color: Colors.black, fontSize: 16.0),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Divider(
+                  color: Colors.black87,
+                  indent: 20,
+                  thickness: 1.0,
+                  height: 1.0,
                 ),
               ],
             ),

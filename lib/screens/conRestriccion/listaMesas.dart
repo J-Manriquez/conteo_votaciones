@@ -3,32 +3,51 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:conteo_votaciones/database/singleton_db.dart';
 import 'package:conteo_votaciones/screens/conteo/conteoMesa.dart';
 
-class MesaListScreen extends StatefulWidget {
+class MesaIdListScreen extends StatefulWidget {
+  final List<String> mesaIds; // Lista de IDs de mesas que se recibirán como parámetro
+
+  const MesaIdListScreen({Key? key, required this.mesaIds}) : super(key: key); // Constructor que acepta los IDs
+
   @override
-  _MesaListScreenState createState() => _MesaListScreenState();
+  _MesaIdListScreenState createState() => _MesaIdListScreenState();
 }
 
-class _MesaListScreenState extends State<MesaListScreen> {
+class _MesaIdListScreenState extends State<MesaIdListScreen> {
   final FirestoreService _firestoreService = FirestoreService(); // Servicio Firestore
   List<Map<String, dynamic>> _mesas = []; // Lista de mesas con sus detalles
 
   @override
   void initState() {
     super.initState();
-    _fetchMesas(); // Obtener la lista de mesas
+    _fetchMesas(); // Obtener la lista de mesas usando los IDs
   }
 
-  // Función para obtener todas las mesas
+  // Función para obtener mesas por IDs
   void _fetchMesas() {
-    _firestoreService.getDocuments('mesas').listen((QuerySnapshot snapshot) {
-      setState(() {
-        _mesas = snapshot.docs.map((doc) => {
-          'id': doc.id, // Guardamos el ID para la navegación
-          'nombre': doc['nombre'], // Obtener nombre de la mesa
-          'ubicacion': doc['ubicacion'], // Obtener ubicación de la mesa
-          'encargado': doc['encargado'], // Obtener encargado de la mesa
-        }).toList(); // Convertimos a una lista de mapas
+    // Usamos FutureBuilder para manejar múltiples llamadas asíncronas
+    Future.wait(widget.mesaIds.map((id) {
+      return _firestoreService.getDocumentId('mesas', id).then((doc) {
+        if (doc.exists) {
+          // Solo agregar documentos existentes
+          return {
+            'id': doc.id,
+            'nombre': doc['nombre'],
+            'ubicacion': doc['ubicacion'],
+            'encargado': doc['encargado'],
+          };
+        }
+        return null; // Si el documento no existe, devolver null
       });
+    })).then((mesas) {
+      // Filtrar los valores nulos y actualizar el estado
+      setState(() {
+        _mesas = mesas.where((mesa) => mesa != null).cast<Map<String, dynamic>>().toList();
+      });
+    }).catchError((error) {
+      // Manejar errores al obtener los documentos
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al cargar mesas: $error')),
+      );
     });
   }
 
