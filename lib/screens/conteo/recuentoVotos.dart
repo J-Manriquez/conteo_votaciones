@@ -16,6 +16,7 @@ class _RecuentoVotosScreenState extends State<RecuentoVotosScreen> {
   bool _isTableVisible = false;
   String _selectedSorting = 'votos_validos';
   String? _selectedCargo;
+  String _tableTitle = 'Conteo Total'; // Título de la tabla
 
   List<String> _cargos = [
     'Alcalde',
@@ -30,12 +31,10 @@ class _RecuentoVotosScreenState extends State<RecuentoVotosScreen> {
   @override
   void initState() {
     super.initState();
-    // Llamar al método para obtener los candidatos y sus cargos al iniciar el widget
     _fetchCandidatesCargos();
   }
 
   Future<void> _fetchCandidatesCargos() async {
-    // Obtiene la lista de candidatos desde el servicio y asigna el cargo a cada nombre
     var candidatos = await _candidateTableService.getAllCandidates();
     setState(() {
       _cargosCandidatos = {
@@ -66,30 +65,17 @@ class _RecuentoVotosScreenState extends State<RecuentoVotosScreen> {
           }
 
           Map<String, Map<String, dynamic>> votosSumados = {};
-          print('****************************INICIO PROCESAMIENTO*********************************');
-          print('Cargo seleccionado: $_selectedCargo');
 
           for (var doc in snapshot.data!.docs) {
             var data = doc.data() as Map<String, dynamic>;
-            print('Procesando mesa: ${data['nombre']}');
 
             if (data.containsKey('votos')) {
               var votosPorCandidatos = data['votos'] as Map<String, dynamic>;
-              print('Votos encontrados en la mesa: ${votosPorCandidatos.keys.length} candidatos');
 
               votosPorCandidatos.forEach((candidato, votos) {
-                print('Procesando candidato: $candidato');
-                print('Datos del candidato: $votos');
-                
-                // Obtener el cargo del candidato del mapa de cargos (_cargosCandidatos)
                 String? cargoDelCandidato = _cargosCandidatos[candidato];
 
-                print('Cargo del candidato: $cargoDelCandidato');
-                
-                // Verificar si el candidato cumple con el filtro de cargo
                 if (_selectedCargo == null || cargoDelCandidato == _selectedCargo) {
-                  print('El candidato cumple con el filtro de cargo');
-                  
                   int votosValidos = (votos['validos'] ?? 0) as int;
                   int votosBlancos = (votos['blancos'] ?? 0) as int;
                   int votosObjetados = (votos['objetados'] ?? 0) as int;
@@ -113,20 +99,10 @@ class _RecuentoVotosScreenState extends State<RecuentoVotosScreen> {
                       (votosSumados[candidato]!['votos_objetados'] ?? 0) + votosObjetados;
                   votosSumados[candidato]!['votos_nulos'] =
                       (votosSumados[candidato]!['votos_nulos'] ?? 0) + votosNulos;
-                  
-                  print('Votos acumulados para $candidato: ${votosSumados[candidato]}');
-                } else {
-                  print('El candidato no cumple con el filtro de cargo');
                 }
               });
-            } else {
-              print('La mesa no tiene votos registrados');
             }
           }
-
-          print('****************************RESULTADOS FINALES*********************************');
-          print('Total de candidatos procesados: ${votosSumados.length}');
-          print('Resultados acumulados: $votosSumados');
 
           List<Map<String, dynamic>> votosData = votosSumados.entries
               .map((entry) => {
@@ -154,8 +130,9 @@ class _RecuentoVotosScreenState extends State<RecuentoVotosScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Conteo Total',
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                          Text(_tableTitle,
+                              style: const TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold)),
                           Row(
                             children: [
                               IconButton(
@@ -211,6 +188,9 @@ class _RecuentoVotosScreenState extends State<RecuentoVotosScreen> {
   }
 
   void _showEditModal(BuildContext context) {
+    TextEditingController titleController =
+        TextEditingController(text: _tableTitle); // Controlador para el título
+
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
@@ -221,11 +201,20 @@ class _RecuentoVotosScreenState extends State<RecuentoVotosScreen> {
             children: [
               const Text('Editar Configuración',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(labelText: 'Título de la Tabla'),
+                onChanged: (value) {
+                  setState(() {
+                    _tableTitle = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: _selectedSorting,
                 items: const [
-                  DropdownMenuItem(
-                      value: 'votos_validos', child: Text('Votos Válidos')),
+                  DropdownMenuItem(value: 'votos_validos', child: Text('Votos Válidos')),
                   DropdownMenuItem(value: 'votos_blancos', child: Text('Votos Blancos')),
                   DropdownMenuItem(value: 'votos_objetados', child: Text('Votos Objetados')),
                   DropdownMenuItem(value: 'votos_nulos', child: Text('Votos Nulos')),
