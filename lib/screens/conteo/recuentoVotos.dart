@@ -15,13 +15,13 @@ class _RecuentoVotosScreenState extends State<RecuentoVotosScreen> {
   final CandidateTableService _candidateTableService = CandidateTableService();
   bool _isTableVisible = false;
 
-  // Configuraciones de cada tabla añadida
   List<Map<String, dynamic>> _tableConfigs = [
     {
       'title': 'Conteo Total',
       'sorting': 'votos_validos',
       'cargo': null,
-      'visible': true
+      'visible': true,
+      'selectedMesas': <String>[]
     }
   ];
 
@@ -44,7 +44,8 @@ class _RecuentoVotosScreenState extends State<RecuentoVotosScreen> {
     var candidatos = await _candidateTableService.getAllCandidates();
     setState(() {
       _cargosCandidatos = {
-        for (var candidato in candidatos) candidato.nombre: candidato.cargoPostulacion
+        for (var candidato in candidatos)
+          candidato.nombre: candidato.cargoPostulacion
       };
     });
   }
@@ -58,23 +59,20 @@ class _RecuentoVotosScreenState extends State<RecuentoVotosScreen> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Botón para agregar nuevas tablas
             ElevatedButton(
               onPressed: () {
                 setState(() {
-                  // Añade una nueva configuración de tabla con valores predeterminados
                   _tableConfigs.add({
                     'title': 'Nueva Tabla',
                     'sorting': 'votos_validos',
                     'cargo': null,
                     'visible': true,
+                    'selectedMesas': <String>[]
                   });
                 });
               },
               child: const Text('Añadir Tabla'),
             ),
-
-            // Renderizado de cada tabla según su configuración
             ..._tableConfigs.asMap().entries.map((entry) {
               int index = entry.key;
               Map<String, dynamic> config = entry.value;
@@ -152,6 +150,12 @@ class _RecuentoVotosScreenState extends State<RecuentoVotosScreen> {
         Map<String, Map<String, dynamic>> votosSumados = {};
 
         for (var doc in snapshot.data!.docs) {
+          if (config['selectedMesas'] != null &&
+              config['selectedMesas'].isNotEmpty &&
+              !config['selectedMesas'].contains(doc.id)) {
+            continue;
+          }
+
           var data = doc.data() as Map<String, dynamic>;
 
           if (data.containsKey('votos')) {
@@ -160,7 +164,8 @@ class _RecuentoVotosScreenState extends State<RecuentoVotosScreen> {
             votosPorCandidatos.forEach((candidato, votos) {
               String? cargoDelCandidato = _cargosCandidatos[candidato];
 
-              if (config['cargo'] == null || cargoDelCandidato == config['cargo']) {
+              if (config['cargo'] == null ||
+                  cargoDelCandidato == config['cargo']) {
                 int votosValidos = (votos['validos'] ?? 0) as int;
                 int votosBlancos = (votos['blancos'] ?? 0) as int;
                 int votosObjetados = (votos['objetados'] ?? 0) as int;
@@ -177,11 +182,14 @@ class _RecuentoVotosScreenState extends State<RecuentoVotosScreen> {
                 }
 
                 votosSumados[candidato]!['votos_validos'] =
-                    (votosSumados[candidato]!['votos_validos'] ?? 0) + votosValidos;
+                    (votosSumados[candidato]!['votos_validos'] ?? 0) +
+                        votosValidos;
                 votosSumados[candidato]!['votos_blancos'] =
-                    (votosSumados[candidato]!['votos_blancos'] ?? 0) + votosBlancos;
+                    (votosSumados[candidato]!['votos_blancos'] ?? 0) +
+                        votosBlancos;
                 votosSumados[candidato]!['votos_objetados'] =
-                    (votosSumados[candidato]!['votos_objetados'] ?? 0) + votosObjetados;
+                    (votosSumados[candidato]!['votos_objetados'] ?? 0) +
+                        votosObjetados;
                 votosSumados[candidato]!['votos_nulos'] =
                     (votosSumados[candidato]!['votos_nulos'] ?? 0) + votosNulos;
               }
@@ -196,7 +204,8 @@ class _RecuentoVotosScreenState extends State<RecuentoVotosScreen> {
                 })
             .toList();
 
-        votosData.sort((a, b) => b[config['sorting']].compareTo(a[config['sorting']]));
+        votosData.sort(
+            (a, b) => b[config['sorting']].compareTo(a[config['sorting']]));
 
         return DataTable(
           dataRowHeight: 30,
@@ -224,57 +233,137 @@ class _RecuentoVotosScreenState extends State<RecuentoVotosScreen> {
 
   void _showEditModal(BuildContext context, int index) {
     Map<String, dynamic> config = _tableConfigs[index];
-    TextEditingController titleController = TextEditingController(text: config['title']);
+    TextEditingController titleController =
+        TextEditingController(text: config['title']);
 
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       builder: (BuildContext context) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Editar Configuración',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(labelText: 'Título de la Tabla'),
-                onChanged: (value) {
-                  setState(() {
-                    config['title'] = value;
-                  });
-                },
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: config['sorting'],
-                items: const [
-                  DropdownMenuItem(value: 'votos_validos', child: Text('Votos Válidos')),
-                  DropdownMenuItem(value: 'votos_blancos', child: Text('Votos Blancos')),
-                  DropdownMenuItem(value: 'votos_objetados', child: Text('Votos Objetados')),
-                  DropdownMenuItem(value: 'votos_nulos', child: Text('Votos Nulos')),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    config['sorting'] = value!;
-                  });
-                },
-                decoration: const InputDecoration(labelText: 'Ordenar por'),
-              ),
-              DropdownButtonFormField<String>(
-                value: config['cargo'],
-                items: _cargos.map((String cargo) {
-                  return DropdownMenuItem(value: cargo, child: Text(cargo));
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    config['cargo'] = value;
-                  });
-                },
-                decoration: const InputDecoration(labelText: 'Filtrar por Cargo'),
-              ),
-            ],
-          ),
+        return StatefulBuilder(
+          // Añadimos StatefulBuilder para actualizar el estado dentro del modal
+          builder: (BuildContext context, StateSetter setModalState) {
+            return DraggableScrollableSheet(
+              initialChildSize: 0.8,
+              maxChildSize: 0.9,
+              minChildSize: 0.5,
+              builder: (context, scrollController) {
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('Editar Configuración',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
+                      TextField(
+                        controller: titleController,
+                        decoration: const InputDecoration(
+                            labelText: 'Título de la Tabla'),
+                        onChanged: (value) {
+                          setState(() {
+                            config['title'] = value;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        value: config['sorting'],
+                        items: const [
+                          DropdownMenuItem(
+                              value: 'votos_validos',
+                              child: Text('Votos Válidos')),
+                          DropdownMenuItem(
+                              value: 'votos_blancos',
+                              child: Text('Votos Blancos')),
+                          DropdownMenuItem(
+                              value: 'votos_objetados',
+                              child: Text('Votos Objetados')),
+                          DropdownMenuItem(
+                              value: 'votos_nulos', child: Text('Votos Nulos')),
+                        ],
+                        onChanged: (value) {
+                          setState(() {
+                            config['sorting'] = value!;
+                          });
+                        },
+                        decoration:
+                            const InputDecoration(labelText: 'Ordenar por'),
+                      ),
+                      DropdownButtonFormField<String>(
+                        value: config['cargo'],
+                        items: _cargos.map((String cargo) {
+                          return DropdownMenuItem(
+                              value: cargo, child: Text(cargo));
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            config['cargo'] = value;
+                          });
+                        },
+                        decoration: const InputDecoration(
+                            labelText: 'Filtrar por Cargo'),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text('Seleccionar Mesas',
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
+                      Expanded(
+                        child: StreamBuilder<QuerySnapshot>(
+                          stream: _firestoreService.getDocuments('mesas'),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData) {
+                              return const Center(
+                                  child: CircularProgressIndicator());
+                            }
+
+                            return ListView.builder(
+                              controller: scrollController,
+                              itemCount: snapshot.data!.docs.length,
+                              itemBuilder: (context, i) {
+                                var doc = snapshot.data!.docs[i];
+                                var mesaData =
+                                    doc.data() as Map<String, dynamic>;
+                                String mesaId = doc.id;
+                                String mesaNombre = mesaData['nombre'] ??
+                                    'Mesa sin nombre'; // Asumiendo que el campo se llama 'nombre'
+                                bool isSelected =
+                                    (config['selectedMesas'] ?? [])
+                                        .contains(mesaId);
+
+                                return CheckboxListTile(
+                                  title: Text(mesaNombre),
+                                  value: isSelected,
+                                  onChanged: (bool? value) {
+                                    setModalState(() {
+                                      // Usamos setModalState en lugar de setState
+                                      if (value == true) {
+                                        config['selectedMesas'] = [
+                                          ...(config['selectedMesas'] ?? []),
+                                          mesaId
+                                        ];
+                                      } else {
+                                        config['selectedMesas'] =
+                                            (config['selectedMesas'] as List)
+                                                .where((id) => id != mesaId)
+                                                .toList();
+                                      }
+                                    });
+                                    setState(
+                                        () {}); // Actualizamos también el estado principal
+                                  },
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
         );
       },
     );
