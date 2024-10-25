@@ -1,0 +1,5 @@
+package com.ando.devs.conteo_votaciones
+
+import io.flutter.embedding.android.FlutterActivity
+
+class MainActivity: FlutterActivity()
