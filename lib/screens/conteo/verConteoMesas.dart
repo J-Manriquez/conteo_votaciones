@@ -35,9 +35,9 @@ class _MesaListScreenState extends State<MesaListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Listado de Mesas'), // Título de la pantalla
-      ),
+      // appBar: AppBar(
+      //   title: const Text('Listado de Mesas'), // Título de la pantalla
+      // ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: _mesas.isEmpty // Verifica si hay mesas
@@ -49,7 +49,7 @@ class _MesaListScreenState extends State<MesaListScreen> {
                   return Card(
                     margin: const EdgeInsets.symmetric(vertical: 8.0),
                     child: ListTile(
-                      title: Text(mesa['nombre']), // Mostrar nombre de la mesa
+                      title: Text(mesa['nombre'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)), // Mostrar nombre de la mesa
                       subtitle: Text('Ubicación: ${mesa['ubicacion']}\nEncargado: ${mesa['encargado']}'), // Mostrar ubicación y encargado
                       trailing: const Icon(Icons.arrow_forward), // Icono de navegación
                       onTap: () {

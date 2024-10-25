@@ -15,15 +15,15 @@ class _RecuentoVotosScreenState extends State<RecuentoVotosScreen> {
   final CandidateTableService _candidateTableService = CandidateTableService();
   bool _isTableVisible = false;
 
-  List<Map<String, dynamic>> _tableConfigs = [
+  static List<Map<String, dynamic>> _tableConfigs = [
     {
-      'title': 'Conteo Total',
-      'sorting': 'votos_validos',
-      'cargo': null,
-      'visible': true,
-      'selectedMesas': <String>[]
+        'title': 'Conteo Total',
+        'sorting': 'votos_validos',
+        'cargo': null,
+        'visible': true,
+        'selectedMesas': <String>[]
     }
-  ];
+];
 
   List<String> _cargos = [
     'Alcalde',
@@ -53,79 +53,88 @@ class _RecuentoVotosScreenState extends State<RecuentoVotosScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Recuento de Votos'),
-      ),
+      // appBar: AppBar(
+      //   title: const Text('Recuento de Votos'),
+      // ),
       body: SingleChildScrollView(
-        child: Column(
-          children: [
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _tableConfigs.add({
-                    'title': 'Nueva Tabla',
-                    'sorting': 'votos_validos',
-                    'cargo': null,
-                    'visible': true,
-                    'selectedMesas': <String>[]
-                  });
-                });
-              },
-              child: const Text('Añadir Tabla'),
-            ),
-            ..._tableConfigs.asMap().entries.map((entry) {
-              int index = entry.key;
-              Map<String, dynamic> config = entry.value;
-
-              return Column(
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        config['visible'] = !config['visible'];
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 50.0),
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.all(16.0),
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _tableConfigs.add({
+                        'title': 'Nueva Tabla',
+                        'sorting': 'votos_validos',
+                        'cargo': null,
+                        'visible': true,
+                        'selectedMesas': <String>[]
                       });
-                    },
-                    child: Card(
-                      elevation: 5,
-                      margin: const EdgeInsets.all(16),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(config['title'],
-                                style: const TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold)),
-                            Row(
-                              children: [
-                                IconButton(
-                                  icon: Icon(config['visible']
-                                      ? Icons.visibility
-                                      : Icons.visibility_off),
-                                  onPressed: () {
-                                    setState(() {
-                                      config['visible'] = !config['visible'];
-                                    });
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.edit),
-                                  onPressed: () {
-                                    _showEditModal(context, index);
-                                  },
-                                ),
-                              ],
-                            ),
-                          ],
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                      minimumSize: Size(double.infinity, 50)),
+                  child: const Text('Añadir Tabla'),
+                ),
+              ),
+              ..._tableConfigs.asMap().entries.map((entry) {
+                int index = entry.key;
+                Map<String, dynamic> config = entry.value;
+
+                return Column(
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          config['visible'] = !config['visible'];
+                        });
+                      },
+                      child: Card(
+                        elevation: 5,
+                        margin: const EdgeInsets.all(16),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(config['title'],
+                                  style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold)),
+                              Row(
+                                children: [
+                                  IconButton(
+                                    icon: Icon(config['visible']
+                                        ? Icons.visibility
+                                        : Icons.visibility_off),
+                                    onPressed: () {
+                                      setState(() {
+                                        config['visible'] = !config['visible'];
+                                      });
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.edit),
+                                    onPressed: () {
+                                      _showEditModal(context, index);
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  if (config['visible']) _buildTable(config),
-                ],
-              );
-            }).toList(),
-          ],
+                    if (config['visible']) _buildTable(config),
+                  ],
+                );
+              }).toList(),
+            ],
+          ),
         ),
       ),
     );
