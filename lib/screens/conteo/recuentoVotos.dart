@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:conteo_votaciones/database/singleton_db.dart';
-import 'package:conteo_votaciones/database/metodos/candidatos_mtd.dart'; // Importa el servicio de candidatos
+import 'package:conteo_votaciones/database/metodos/candidatos_mtd.dart';
 
 class RecuentoVotosScreen extends StatefulWidget {
   const RecuentoVotosScreen({Key? key}) : super(key: key);
@@ -14,9 +14,16 @@ class _RecuentoVotosScreenState extends State<RecuentoVotosScreen> {
   final FirestoreService _firestoreService = FirestoreService();
   final CandidateTableService _candidateTableService = CandidateTableService();
   bool _isTableVisible = false;
-  String _selectedSorting = 'votos_validos';
-  String? _selectedCargo;
-  String _tableTitle = 'Conteo Total'; // Título de la tabla
+
+  // Configuraciones de cada tabla añadida
+  List<Map<String, dynamic>> _tableConfigs = [
+    {
+      'title': 'Conteo Total',
+      'sorting': 'votos_validos',
+      'cargo': null,
+      'visible': true
+    }
+  ];
 
   List<String> _cargos = [
     'Alcalde',
@@ -25,7 +32,6 @@ class _RecuentoVotosScreenState extends State<RecuentoVotosScreen> {
     'Consejo Regional'
   ];
 
-  // Mapa que asociará cada candidato con su cargo
   Map<String, String> _cargosCandidatos = {};
 
   @override
@@ -49,147 +55,176 @@ class _RecuentoVotosScreenState extends State<RecuentoVotosScreen> {
       appBar: AppBar(
         title: const Text('Recuento de Votos'),
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: _firestoreService.getDocuments('mesas'),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            // Botón para agregar nuevas tablas
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  // Añade una nueva configuración de tabla con valores predeterminados
+                  _tableConfigs.add({
+                    'title': 'Nueva Tabla',
+                    'sorting': 'votos_validos',
+                    'cargo': null,
+                    'visible': true,
+                  });
+                });
+              },
+              child: const Text('Añadir Tabla'),
+            ),
 
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
+            // Renderizado de cada tabla según su configuración
+            ..._tableConfigs.asMap().entries.map((entry) {
+              int index = entry.key;
+              Map<String, dynamic> config = entry.value;
 
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text('No hay votos registrados.'));
-          }
-
-          Map<String, Map<String, dynamic>> votosSumados = {};
-
-          for (var doc in snapshot.data!.docs) {
-            var data = doc.data() as Map<String, dynamic>;
-
-            if (data.containsKey('votos')) {
-              var votosPorCandidatos = data['votos'] as Map<String, dynamic>;
-
-              votosPorCandidatos.forEach((candidato, votos) {
-                String? cargoDelCandidato = _cargosCandidatos[candidato];
-
-                if (_selectedCargo == null || cargoDelCandidato == _selectedCargo) {
-                  int votosValidos = (votos['validos'] ?? 0) as int;
-                  int votosBlancos = (votos['blancos'] ?? 0) as int;
-                  int votosObjetados = (votos['objetados'] ?? 0) as int;
-                  int votosNulos = (votos['nulos'] ?? 0) as int;
-
-                  if (!votosSumados.containsKey(candidato)) {
-                    votosSumados[candidato] = {
-                      'votos_validos': 0,
-                      'votos_blancos': 0,
-                      'votos_objetados': 0,
-                      'votos_nulos': 0,
-                      'cargo': cargoDelCandidato,
-                    };
-                  }
-
-                  votosSumados[candidato]!['votos_validos'] =
-                      (votosSumados[candidato]!['votos_validos'] ?? 0) + votosValidos;
-                  votosSumados[candidato]!['votos_blancos'] =
-                      (votosSumados[candidato]!['votos_blancos'] ?? 0) + votosBlancos;
-                  votosSumados[candidato]!['votos_objetados'] =
-                      (votosSumados[candidato]!['votos_objetados'] ?? 0) + votosObjetados;
-                  votosSumados[candidato]!['votos_nulos'] =
-                      (votosSumados[candidato]!['votos_nulos'] ?? 0) + votosNulos;
-                }
-              });
-            }
-          }
-
-          List<Map<String, dynamic>> votosData = votosSumados.entries
-              .map((entry) => {
-                    'candidato': entry.key,
-                    ...entry.value,
-                  })
-              .toList();
-
-          votosData.sort((a, b) => b[_selectedSorting].compareTo(a[_selectedSorting]));
-
-          return SingleChildScrollView(
-            child: Column(
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _isTableVisible = !_isTableVisible;
-                    });
-                  },
-                  child: Card(
-                    elevation: 5,
-                    margin: const EdgeInsets.all(16),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(_tableTitle,
-                              style: const TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold)),
-                          Row(
-                            children: [
-                              IconButton(
-                                icon: Icon(_isTableVisible
-                                    ? Icons.visibility
-                                    : Icons.visibility_off),
-                                onPressed: () {
-                                  setState(() {
-                                    _isTableVisible = !_isTableVisible;
-                                  });
-                                },
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.edit),
-                                onPressed: () {
-                                  _showEditModal(context);
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
+              return Column(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        config['visible'] = !config['visible'];
+                      });
+                    },
+                    child: Card(
+                      elevation: 5,
+                      margin: const EdgeInsets.all(16),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(config['title'],
+                                style: const TextStyle(
+                                    fontSize: 18, fontWeight: FontWeight.bold)),
+                            Row(
+                              children: [
+                                IconButton(
+                                  icon: Icon(config['visible']
+                                      ? Icons.visibility
+                                      : Icons.visibility_off),
+                                  onPressed: () {
+                                    setState(() {
+                                      config['visible'] = !config['visible'];
+                                    });
+                                  },
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.edit),
+                                  onPressed: () {
+                                    _showEditModal(context, index);
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-                if (_isTableVisible)
-                  DataTable(
-                    dataRowHeight: 30,
-                    columnSpacing: 8,
-                    columns: const [
-                      DataColumn(label: Text('Candidato')),
-                      DataColumn(label: Text('Válidos')),
-                      DataColumn(label: Text('Blancos')),
-                      DataColumn(label: Text('Objetados')),
-                      DataColumn(label: Text('Nulos')),
-                    ],
-                    rows: votosData.map((voto) {
-                      return DataRow(cells: [
-                        DataCell(Text(voto['candidato'])),
-                        DataCell(Text(voto['votos_validos'].toString())),
-                        DataCell(Text(voto['votos_blancos'].toString())),
-                        DataCell(Text(voto['votos_objetados'].toString())),
-                        DataCell(Text(voto['votos_nulos'].toString())),
-                      ]);
-                    }).toList(),
-                  ),
-              ],
-            ),
-          );
-        },
+                  if (config['visible']) _buildTable(config),
+                ],
+              );
+            }).toList(),
+          ],
+        ),
       ),
     );
   }
 
-  void _showEditModal(BuildContext context) {
-    TextEditingController titleController =
-        TextEditingController(text: _tableTitle); // Controlador para el título
+  Widget _buildTable(Map<String, dynamic> config) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestoreService.getDocuments('mesas'),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text('No hay votos registrados.'));
+        }
+
+        Map<String, Map<String, dynamic>> votosSumados = {};
+
+        for (var doc in snapshot.data!.docs) {
+          var data = doc.data() as Map<String, dynamic>;
+
+          if (data.containsKey('votos')) {
+            var votosPorCandidatos = data['votos'] as Map<String, dynamic>;
+
+            votosPorCandidatos.forEach((candidato, votos) {
+              String? cargoDelCandidato = _cargosCandidatos[candidato];
+
+              if (config['cargo'] == null || cargoDelCandidato == config['cargo']) {
+                int votosValidos = (votos['validos'] ?? 0) as int;
+                int votosBlancos = (votos['blancos'] ?? 0) as int;
+                int votosObjetados = (votos['objetados'] ?? 0) as int;
+                int votosNulos = (votos['nulos'] ?? 0) as int;
+
+                if (!votosSumados.containsKey(candidato)) {
+                  votosSumados[candidato] = {
+                    'votos_validos': 0,
+                    'votos_blancos': 0,
+                    'votos_objetados': 0,
+                    'votos_nulos': 0,
+                    'cargo': cargoDelCandidato,
+                  };
+                }
+
+                votosSumados[candidato]!['votos_validos'] =
+                    (votosSumados[candidato]!['votos_validos'] ?? 0) + votosValidos;
+                votosSumados[candidato]!['votos_blancos'] =
+                    (votosSumados[candidato]!['votos_blancos'] ?? 0) + votosBlancos;
+                votosSumados[candidato]!['votos_objetados'] =
+                    (votosSumados[candidato]!['votos_objetados'] ?? 0) + votosObjetados;
+                votosSumados[candidato]!['votos_nulos'] =
+                    (votosSumados[candidato]!['votos_nulos'] ?? 0) + votosNulos;
+              }
+            });
+          }
+        }
+
+        List<Map<String, dynamic>> votosData = votosSumados.entries
+            .map((entry) => {
+                  'candidato': entry.key,
+                  ...entry.value,
+                })
+            .toList();
+
+        votosData.sort((a, b) => b[config['sorting']].compareTo(a[config['sorting']]));
+
+        return DataTable(
+          dataRowHeight: 30,
+          columnSpacing: 8,
+          columns: const [
+            DataColumn(label: Text('Candidato')),
+            DataColumn(label: Text('Válidos')),
+            DataColumn(label: Text('Blancos')),
+            DataColumn(label: Text('Objetados')),
+            DataColumn(label: Text('Nulos')),
+          ],
+          rows: votosData.map((voto) {
+            return DataRow(cells: [
+              DataCell(Text(voto['candidato'])),
+              DataCell(Text(voto['votos_validos'].toString())),
+              DataCell(Text(voto['votos_blancos'].toString())),
+              DataCell(Text(voto['votos_objetados'].toString())),
+              DataCell(Text(voto['votos_nulos'].toString())),
+            ]);
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  void _showEditModal(BuildContext context, int index) {
+    Map<String, dynamic> config = _tableConfigs[index];
+    TextEditingController titleController = TextEditingController(text: config['title']);
 
     showModalBottomSheet(
       context: context,
@@ -206,13 +241,13 @@ class _RecuentoVotosScreenState extends State<RecuentoVotosScreen> {
                 decoration: const InputDecoration(labelText: 'Título de la Tabla'),
                 onChanged: (value) {
                   setState(() {
-                    _tableTitle = value;
+                    config['title'] = value;
                   });
                 },
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _selectedSorting,
+                value: config['sorting'],
                 items: const [
                   DropdownMenuItem(value: 'votos_validos', child: Text('Votos Válidos')),
                   DropdownMenuItem(value: 'votos_blancos', child: Text('Votos Blancos')),
@@ -221,19 +256,19 @@ class _RecuentoVotosScreenState extends State<RecuentoVotosScreen> {
                 ],
                 onChanged: (value) {
                   setState(() {
-                    _selectedSorting = value!;
+                    config['sorting'] = value!;
                   });
                 },
                 decoration: const InputDecoration(labelText: 'Ordenar por'),
               ),
               DropdownButtonFormField<String>(
-                value: _selectedCargo,
+                value: config['cargo'],
                 items: _cargos.map((String cargo) {
                   return DropdownMenuItem(value: cargo, child: Text(cargo));
                 }).toList(),
                 onChanged: (value) {
                   setState(() {
-                    _selectedCargo = value;
+                    config['cargo'] = value;
                   });
                 },
                 decoration: const InputDecoration(labelText: 'Filtrar por Cargo'),
