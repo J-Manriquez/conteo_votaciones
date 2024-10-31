@@ -1,3 +1,4 @@
+import 'package:conteo_votaciones/firebase_options.dart';
 import 'package:conteo_votaciones/screens/candidatos/candidatos.dart';
 import 'package:conteo_votaciones/screens/conteo/recuentoVotos.dart';
 import 'package:conteo_votaciones/screens/conteo/verConteoMesas.dart';
@@ -10,7 +11,7 @@ import 'package:firebase_core/firebase_core.dart';
 void main() async {
   WidgetsFlutterBinding
       .ensureInitialized(); // Asegura la inicialización de widgets
-  await Firebase.initializeApp(); // Inicializa Firebase
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform,); // Inicializa Firebase
   runApp(const MainApp()); // Inicia la aplicación
 }
 
