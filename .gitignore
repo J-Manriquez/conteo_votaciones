@@ -41,3 +41,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Carpeta web para no cambiar datos del build web en el vps
+/web/
